@@ -163,7 +163,7 @@ def run(bot):
                 bot.sendMessage(chat_id=chat_id,
                             text="Where are you departing from?", reply_markup = reply_markup)
             # Once we have a departure stop, ask about arrival
-            elif current_state_by_user.get(user_id, UserState.undefined) == UserState.asked_departure:
+            elif current_state_by_user.get(user_id, UserState.undefined) == UserState.asked_departure and message in [stop.stop_name for stop in stops]:
                 user_query = Query()
                 user_query.departure_stop_id = next((x for x in stops if x.stop_name == message), None).stop_id
 
@@ -173,7 +173,7 @@ def run(bot):
                 reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard = True)
                 bot.sendMessage(chat_id = chat_id, text = "Where are you going?", reply_markup = reply_markup)
 
-            elif current_state_by_user.get(user_id, UserState.undefined) == UserState.asked_arrival:
+            elif current_state_by_user.get(user_id, UserState.undefined) == UserState.asked_arrival and message in [stop.stop_name for stop in stops]:
                 user_query = current_query_by_user[user_id]
                 user_query.arrival_stop_id = next((x for x in stops if x.stop_name == message), None).stop_id
 
@@ -181,10 +181,10 @@ def run(bot):
                 custom_keyboard = [["Weekday", "Weekend"]]
 
                 reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard = True)
-                bot.sendMessage(chat_id = chat_id, text = "Weekday, or Weeekend?", reply_markup = reply_markup)
+                bot.sendMessage(chat_id = chat_id, text = "Weekday, or Weekend?", reply_markup = reply_markup)
 
             # Once we have an arrival stop, ask about timing
-            elif current_state_by_user.get(user_id, UserState.undefined) == UserState.asked_weekday:
+            elif current_state_by_user.get(user_id, UserState.undefined) == UserState.asked_weekday and ("Weekday" in message or "Weekend" in message):
                 # Get the current user's query, and add this new information
                 user_query = current_query_by_user[user_id]
                 if "Weekday" in message:
@@ -208,20 +208,26 @@ def run(bot):
                     bot.sendMessage(chat_id=chat_id,
                                 text="When will you leave?", reply_markup = reply_markup)
             # Return when it will get there
-            elif current_state_by_user.get(user_id, UserState.undefined) == UserState.asked_time:
+            elif current_state_by_user.get(user_id, UserState.undefined) == UserState.asked_time and ":" in message:
                 user_query = current_query_by_user[user_id]
                 current_state_by_user[user_id] = UserState.undefined
-                index = user_query.departing_times.index(message)
-                custom_keyboard = telegram.ReplyKeyboardHide()
-                reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, one_time_keyboard = True)
-                bot.sendMessage(chat_id=chat_id,
+                
+                try:
+                    index = user_query.departing_times.index(message)
+                    custom_keyboard = telegram.ReplyKeyboardHide()
+                    reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, one_time_keyboard = True)
+                    bot.sendMessage(chat_id=chat_id,
                             text="Gets there at " + str(user_query.arriving_times[index]) + "!", reply_markup = reply_markup)
+                except ValueError:
+                    custom_keyboard = telegram.ReplyKeyboardHide()
+                    reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
+                    bot.sendMessage(chat_id=chat_id, text="Hm...I don't think that's one of the times I sent you! Try typing `/train` again.", reply_markup = reply_markup)
             else:
                 current_state_by_user[user_id] = UserState.undefined
                 current_query_by_user[user_id] = Query()
                 custom_keyboard = telegram.ReplyKeyboardHide()
                 reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
-                bot.sendMessage(chat_id=chat_id, text="Hm...I didn't understand that. Try typing `/train`")
+                bot.sendMessage(chat_id=chat_id, text="Hm...I didn't understand that. Try typing `/train`", reply_markup = reply_markup)
 
 
             # Updates global offset to get the new updates
