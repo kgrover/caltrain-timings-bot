@@ -51,7 +51,7 @@ def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     # Telegram Bot Authorization Token
-    bot = telegram.Bot('<auth-token>')
+    bot = telegram.Bot('<auth token>')
 
     # Process!
     process_times()
@@ -71,7 +71,7 @@ def process_times():
     global stops
 
     # Load the GTFS file
-    input_path = "/Users/kshitij/Downloads/GTFS-Caltrain"
+    input_path = "/home/ec2-user/GTFS-Caltrain"
     loader = transitfeed.Loader(input_path)
 
     # Get schedule
