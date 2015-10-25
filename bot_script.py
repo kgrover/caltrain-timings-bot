@@ -198,10 +198,15 @@ def run(bot):
                 # Get and Store the list of departing and corresponding arrival times
                 user_query.departing_times, user_query.arriving_times = get_times(user_query.departure_stop_id, user_query.arrival_stop_id, user_query.is_weekend)
 
-                custom_keyboard = split_list(user_query.departing_times, wanted_parts = 10)
-                reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard = True, one_time_keyboard = True)
-                bot.sendMessage(chat_id=chat_id,
-                            text="When will you leave?", reply_markup = reply_markup)
+                if len(user_query.departing_times) == 0:
+                    bot.sendMessage(chat_id=chat_id, text = "I couldn't find any times for that route!")
+                    current_state_by_user[user_id] = UserState.undefined
+                    current_query_by_user[user_id] = Query()
+                else:
+                    custom_keyboard = split_list(user_query.departing_times, wanted_parts = 10)
+                    reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard, resize_keyboard = True, one_time_keyboard = True)
+                    bot.sendMessage(chat_id=chat_id,
+                                text="When will you leave?", reply_markup = reply_markup)
             # Return when it will get there
             elif current_state_by_user.get(user_id, UserState.undefined) == UserState.asked_time:
                 user_query = current_query_by_user[user_id]
